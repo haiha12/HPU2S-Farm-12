@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HPU2S Farm 🌷 - Smart Agriculture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <div class="brand">
+                <span style="font-size: 30px;">🌷</span>
+                <h2>HPU2S Farm</h2>
+            </div>
+            <button id="btnLogout" class="btn hidden small-btn">Đăng xuất</button>
+        </header>
+
+        <div id="registerScreen" class="auth-screen hidden">
+            <h3>Đăng ký thành viên</h3>
+            
+            <div class="input-group">
+                <label>Họ và tên</label>
+                <input type="text" id="regName" placeholder="Nhập tên của bạn">
+            </div>
+            
+            <div class="input-group">
+                <label>SĐT / Email</label>
+                <input type="text" id="regContact" placeholder="SĐT dùng để đăng nhập">
+            </div>
+            
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="regPass" placeholder="******">
+            </div>
+            
+            <div class="input-group">
+                <label>Tọa độ GPS</label>
+                <div class="gps-box">
+                    <input type="text" id="regGPS" readonly placeholder="Chưa lấy tọa độ">
+                    <button class="btn gps-btn" onclick="getGPS()">📍 Lấy GPS</button>
+                </div>
+            </div>
+
+            <button class="btn" onclick="handleRegister()">Đăng Ký</button>
+            <span class="switch-link" onclick="switchView('login')">Đã có tài khoản? Đăng nhập</span>
+        </div>
+
+        <div id="loginScreen" class="auth-screen">
+            <h3>Đăng nhập</h3>
+            <div class="input-group">
+                <label>Tài khoản (SĐT)</label>
+                <input type="text" id="loginContact" placeholder="Nhập SĐT đã đăng ký">
+            </div>
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="loginPass" placeholder="Nhập mật khẩu">
+            </div>
+            <button class="btn" onclick="handleLogin()">Vào Vườn 🌷</button>
+            <span class="switch-link" onclick="switchView('register')">Chưa có tài khoản? Đăng ký</span>
+        </div>
+
+        <div id="dashboardScreen" class="dashboard hidden">
+            <div class="camera-section">
+                <video id="webcamVideo" autoplay playsinline muted></video>
+                <canvas id="aiCanvas" style="display:none;"></canvas>
+                <img id="iotImage" class="iot-stream hidden" src="" alt="IoT Stream">
+                
+                <div class="camera-controls">
+                    <select id="cameraSource" onchange="changeCameraSource()">
+                        <option value="webcam">🖥️ Webcam Laptop</option>
+                        <option value="iot1">📹 IoT Cam 1</option>
+                        <option value="iot2">📹 IoT Cam 2</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="status-panel">
+                <div class="card">
+                    <div>Giờ thực tế</div>
+                    <div id="clock" class="time-display">00:00:00</div>
+                </div>
+                <div class="card">
+                    <div>Tình trạng</div>
+                    <div id="plantStatus" class="status-display status-waiting">
+                        <i class="fas fa-sync fa-spin"></i> Đang quét...
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-report">
+                <h3>📋 Kết quả chẩn đoán (YOLOv11)</h3>
+                <div class="report-item"><span class="label">Bệnh:</span> <span id="aiDiseaseName">---</span></div>
+                <div class="report-item"><span class="label">Nguyên nhân:</span> <span id="aiCause">---</span></div>
+                <div class="report-item"><span class="label">Giải pháp:</span> <span id="aiSolution">---</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
