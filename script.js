@@ -1,7 +1,6 @@
 const AI_SERVER_URL = "https://hpu2s-farm-12.onrender.com/detect"; 
 const FIREBASE_API_KEY = "AIzaSyAQSoG7YJbap3d47qqhEfZWc3kIJr35B5M";
 
-// --- QUẢN LÝ CHUYỂN MÀN HÌNH ---
 function switchView(view) {
     document.getElementById('registerScreen').classList.add('hidden');
     document.getElementById('loginScreen').classList.add('hidden');
@@ -28,7 +27,6 @@ function switchView(view) {
     }
 }
 
-// --- XỬ LÝ ĐĂNG KÝ ---
 function getGPS() {
     if(navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
@@ -52,7 +50,6 @@ function handleRegister() {
         return;
     }
 
-    // Kiểm tra xem tài khoản đã tồn tại chưa
     if (localStorage.getItem('hpu2s_user_' + contact)) {
         alert("Tài khoản (SĐT/Email) này đã tồn tại! Vui lòng dùng SĐT khác hoặc Đăng nhập.");
         return;
@@ -74,7 +71,6 @@ function handleRegister() {
     switchView('login');
 }
 
-// --- XỬ LÝ ĐĂNG NHẬP ---
 function handleLogin() {
     const sdt = document.getElementById('loginContact').value;
     const pass = document.getElementById('loginPass').value;
@@ -84,7 +80,6 @@ function handleLogin() {
         return;
     }
 
-    // Lấy dữ liệu user từ LocalStorage
     const storedUser = localStorage.getItem('hpu2s_user_' + sdt);
 
     if (!storedUser) {
@@ -109,7 +104,6 @@ document.getElementById('btnLogout').onclick = () => {
     switchView('login'); 
 };
 
-// --- CAMERA & AI LOOP ---
 let videoStream;
 let aiInterval;
 
@@ -133,36 +127,32 @@ function stopCamera() {
         videoStream.getTracks().forEach(track => track.stop());
         videoStream = null;
     }
-    clearInterval(aiInterval); // Dừng gửi ảnh cho AI
+    clearInterval(aiInterval);
 }
 
 function startAI_Loop() {
-    // Xóa interval cũ nếu có để tránh trùng lặp
     if (aiInterval) clearInterval(aiInterval);
 
     aiInterval = setInterval(async () => {
         const video = document.getElementById('webcamVideo');
-        
-        // Nếu video bị ẩn hoặc chưa có stream thì không làm gì
+
         if (video.classList.contains('hidden') || !videoStream || video.paused || video.ended) return;
 
         const canvas = document.getElementById('aiCanvas');
         const context = canvas.getContext('2d');
 
-        // Vẽ hình từ video lên canvas
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Chuyển canvas thành file ảnh và gửi đi
-        canvas.toBlob(async (blob) => {
+           canvas.toBlob(async (blob) => {
             if (!blob) return;
             
             const formData = new FormData();
             formData.append("file", blob, "plant.jpg");
 
             try {
-                const response = await fetch(AI_SERVER_URL, {
+                const response = await fetch(https://hpu2s-farm-12.onrender.com/detect, {
                     method: "POST",
                     body: formData
                 });
@@ -176,9 +166,9 @@ function startAI_Loop() {
             } catch (err) {
                 console.log("Không kết nối được AI Server:", err);
             }
-        }, 'image/jpeg', 0.7); // Chất lượng ảnh 0.7 để gửi nhanh hơn
+        }, 'image/jpeg', 0.7); 
 
-    }, 3000); // Gửi mỗi 3 giây (thay vì 2 giây để đỡ lag)
+    }, 3000);
 }
 
 function updateReport(data) {
@@ -212,3 +202,4 @@ document.addEventListener("DOMContentLoaded", () => {
     switchView('login');
 
 });
+
