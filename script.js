@@ -1,4 +1,4 @@
-const AI_SERVER_URL = "https://hpu2sfarm-backend-m9q4.onrender.com/detect"; 
+const AI_SERVER_URL = "https://hpu2s-farm-12.onrender.com/detect"; 
 const FIREBASE_API_KEY = "AIzaSyAQSoG7YJbap3d47qqhEfZWc3kIJr35B5M";
 
 // --- QUẢN LÝ CHUYỂN MÀN HÌNH ---
@@ -210,4 +210,5 @@ function startClock() {
 // Khởi chạy
 document.addEventListener("DOMContentLoaded", () => {
     switchView('login');
+
 });
