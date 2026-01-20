@@ -3,103 +3,878 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HPU2S Farm 🌷 - Smart Agriculture</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <title>Dự án quét bệnh lá chè với YOLO11</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/5806/5806342.png">
+    <style>
+    /* 1. IMPORT FONT CHỮ HIỆN ĐẠI (Google Fonts) */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+    /* 2. CẤU HÌNH CHUNG */
+    body { 
+        font-family: 'Poppins', sans-serif; /* Font chữ tròn, hiện đại */
+        /* Nền Gradient Hồng - Cam đào siêu xinh */
+        background: linear-gradient(135deg, #b5fffd 0%, #ffc9ee 99%, #ff8cdb 100%); 
+        background-attachment: fixed; /* Giữ nền cố định khi cuộn */
+        color: #333; /* Chữ màu tối để dễ đọc trên nền sáng */
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        min-height: 100vh; 
+        margin: 0; 
+    }
+
+    /* 3. MÀN HÌNH ĐĂNG NHẬP */
+    #login-screen { 
+        text-align: center; 
+        background: rgba(255, 255, 255, 0.9); /* Nền trắng mờ */
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(255, 105, 135, 0.3); /* Bóng đổ màu hồng */
+        backdrop-filter: blur(10px); /* Hiệu ứng kính */
+    }
+    
+    h1 { color: #ff6b81; margin-bottom: 10px; font-weight: 700; }
+    p { color: #666; margin-bottom: 30px; }
+
+    .btn-google { 
+        background: white; 
+        color: #555; 
+        padding: 12px 30px; 
+        border: 1px solid #eee; 
+        border-radius: 50px; /* Bo tròn hoàn toàn */
+        font-size: 16px; 
+        font-weight: 600;
+        cursor: pointer; 
+        display: flex; 
+        align-items: center; 
+        gap: 15px; 
+        margin: 0 auto; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-google:hover { 
+        transform: translateY(-2px); 
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
+    }
+
+    /* 4. MÀN HÌNH CHÍNH */
+    #app-screen { 
+        display: none; 
+        text-align: center; 
+        width: 100%;
+        max-width: 800px;
+    }
+
+    /* User Info */
+    .user-info { 
+        background: rgba(255,255,255,0.8);
+        padding: 10px 20px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center; 
+        gap: 15px; 
+        justify-content: center; 
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; }
+    #userName { font-weight: 600; color: #444; }
+
+    /* Khung Video (Glassmorphism) */
+    .container { 
+        position: relative; 
+        width: 640px; 
+        height: 480px; 
+        background: #000; 
+        border-radius: 20px; /* Bo góc mềm mại */
+        overflow: hidden; 
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
+        margin: 0 auto;
+        border: 5px solid rgba(255,255,255,0.5); /* Viền kính trắng */
+    }
+    
+    video, canvas { 
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; 
+    }
+
+    /* 5. CÁC NÚT ĐIỀU KHIỂN */
+    .controls { margin-top: 25px; display: flex; gap: 20px; align-items: center; justify-content: center; }
+    
+    button { 
+        padding: 12px 30px; 
+        border: none; 
+        border-radius: 50px; 
+        cursor: pointer; 
+        font-weight: 700; 
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Gradient Buttons */
+    .btn-start { 
+        background: linear-gradient(45deg, #ff9a9e, #fad0c4); 
+        color: #fff; 
+        box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+    }
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 154, 158, 0.6); }
+
+    .btn-stop { 
+        background: linear-gradient(45deg, #ff758c, #ff7eb3); 
+        color: white; 
+        box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
+    }
+    
+    .btn-logout { 
+        background: transparent; 
+        color: #ff6b81; 
+        border: 2px solid #ff6b81; 
+        padding: 6px 15px;
+        font-size: 14px;
+    }
+    .btn-logout:hover { background: #ff6b81; color: white; }
+
+    button:disabled { background: #e0e0e0; color: #aaa; cursor: not-allowed; box-shadow: none; transform: none; }
+
+    /* 6. BẢNG THÔNG TIN (INFO PANEL) */
+    .info-panel {
+        width: 640px;
+        display: flex;
+        gap: 20px;
+        margin: 20px auto 0 auto;
+    }
+
+    .card {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.9); /* Nền trắng sạch */
+        padding: 20px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border-left: none; /* Bỏ viền cũ */
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Thanh trạng thái nhỏ bên trái thay cho viền to */
+    .card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 6px;
+        background: #ddd;
+    }
+
+    .card .icon { font-size: 36px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    .card .label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-bottom: 4px; }
+    .card .value { font-size: 18px; font-weight: 700; color: #333; margin: 0; }
+    .card .sub-value { font-size: 13px; color: #666; font-weight: 400; }
+
+    /* Trạng thái An toàn (Xanh Mint) */
+    .card.safe::before { background: #48c6ef; } 
+    .card.safe .value { color: #20bf6b; }
+    
+    /* Trạng thái Nguy hiểm (Đỏ Hồng) */
+    .card.danger::before { background: #ff758c; }
+    .card.danger { background: #fff0f3; } /* Nền hồng nhạt báo động */
+    .card.danger .value { color: #ff4757; }
+
+    /* Text status chân trang */
+    .footer-status { margin-top: 15px; color: #555; font-size: 14px; }
+    .footer-status span { font-weight: bold; color: #ff6b81; }
+
+    /* Nút cài đặt hình tròn */
+.btn-settings {
+    background: white;
+    color: #555;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.btn-settings:hover { transform: rotate(90deg); background: #f8f9fa; }
+
+/* Modal (Pop-up) */
+.modal {
+    display: none; /* Mặc định ẩn */
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; top: 0; 
+    width: 100%; height: 100%; 
+    background-color: rgba(0,0,0,0.5); /* Nền tối mờ */
+    backdrop-filter: blur(5px);
+    align-items: center; justify-content: center;
+}
+
+/* Hiệu ứng hiện modal */
+.modal.show { display: flex; animation: fadeIn 0.3s; }
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    width: 400px;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    padding: 15px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: white;
+}
+.modal-header h3 { margin: 0; font-size: 18px; }
+.close-btn { font-size: 28px; cursor: pointer; line-height: 20px; }
+.close-btn:hover { color: #ffe3e3; }
+
+.modal-body { padding: 20px; }
+.desc { font-size: 13px; color: #666; margin-top: 0; }
+
+/* Hàng âm thanh */
+.sound-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+.sound-label { display: flex; flex-direction: column; }
+.sound-label span { font-weight: 600; font-size: 14px; color: #444; }
+.status-text { font-size: 11px; color: #888; }
+.status-text.active { color: #28a745; font-weight: bold; }
+
+/* Nút upload custom */
+.custom-file-upload {
+    border: 1px solid #ddd;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #555;
+    transition: 0.2s;
+}
+.custom-file-upload:hover { background: #eee; }
+input[type="file"] { display: none; } /* Ẩn input xấu xí đi */
+
+.test-sound { margin-top: 20px; text-align: center; }
+.btn-test { background: #eee; color: #333; font-size: 13px; padding: 8px 20px; }
+.btn-test:hover { background: #ddd; }
+
+@keyframes fadeIn { from {opacity: 0; transform: scale(0.9);} to {opacity: 1; transform: scale(1);} }
+</style>
 </head>
 <body>
 
-    <div class="container">
-        <header class="header">
-            <div class="brand">
-                <span style="font-size: 30px;">🌷</span>
-                <h2>HPU2S Farm</h2>
-            </div>
-            <button id="btnLogout" class="btn hidden small-btn">Đăng xuất</button>
-        </header>
+    <div id="login-screen">
+        <h1>🌿 Tea Leaf Doctor AI</h1>
+        <p>Vui lòng đăng nhập để bắt đầu quét bệnh cây chè.</p>
+        <button id="btnLogin" class="btn-google">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#fff" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"></path><path fill="#fff" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z"></path><path fill="#fff" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"></path><path fill="#fff" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.159 6.656 3.58 9 3.58z"></path></svg>
+            Đăng nhập bằng Google
+        </button>
+    </div>
 
-        <div id="registerScreen" class="auth-screen hidden">
-            <h3>Đăng ký thành viên</h3>
-            
-            <div class="input-group">
-                <label>Họ và tên</label>
-                <input type="text" id="regName" placeholder="Nhập tên của bạn">
-            </div>
-            
-            <div class="input-group">
-                <label>SĐT / Email</label>
-                <input type="text" id="regContact" placeholder="SĐT dùng để đăng nhập">
-            </div>
-            
-            <div class="input-group">
-                <label>Mật khẩu</label>
-                <input type="password" id="regPass" placeholder="******">
-            </div>
-            
-            <div class="input-group">
-                <label>Tọa độ GPS</label>
-                <div class="gps-box">
-                    <input type="text" id="regGPS" readonly placeholder="Chưa lấy tọa độ">
-                    <button class="btn gps-btn" onclick="getGPS()">📍 Lấy GPS</button>
-                </div>
-            </div>
-
-            <button class="btn" onclick="handleRegister()">Đăng Ký</button>
-            <span class="switch-link" onclick="switchView('login')">Đã có tài khoản? Đăng nhập</span>
+    <div id="app-screen">
+        <div class="user-info">
+            <img id="userAvatar" class="user-avatar" src="" alt="">
+            <span id="userName">User</span>
+            <button id="btnLogout" class="btn-logout">Đăng xuất</button>
         </div>
 
-        <div id="loginScreen" class="auth-screen">
-            <h3>Đăng nhập</h3>
-            <div class="input-group">
-                <label>Tài khoản (SĐT)</label>
-                <input type="text" id="loginContact" placeholder="Nhập SĐT đã đăng ký">
-            </div>
-            <div class="input-group">
-                <label>Mật khẩu</label>
-                <input type="password" id="loginPass" placeholder="Nhập mật khẩu">
-            </div>
-            <button class="btn" onclick="handleLogin()">Vào Vườn 🌷</button>
-            <span class="switch-link" onclick="switchView('register')">Chưa có tài khoản? Đăng ký</span>
+        <div class="container">
+            <video id="videoElement" width="640" height="480" muted playsinline></video>
+            <canvas id="outputCanvas" width="640" height="480"></canvas>
+        </div>
+        <div class="info-panel">
+            <div class="card time-card">
+                <div class="icon">🕒</div>
+                <div>
+                    <div class="label">Thời gian thực</div>
+                    <div id="clockDisplay" class="value">--:--:--</div>
+                    <div id="dateDisplay" class="sub-value">--/--/----</div>
+                </div>
         </div>
 
-        <div id="dashboardScreen" class="dashboard hidden">
-            <div class="camera-section">
-                <video id="webcamVideo" autoplay playsinline muted></video>
-                <canvas id="aiCanvas" style="display:none;"></canvas>
-                <img id="iotImage" class="iot-stream hidden" src="" alt="IoT Stream">
-                
-                <div class="camera-controls">
-                    <select id="cameraSource" onchange="changeCameraSource()">
-                        <option value="webcam">🖥️ Webcam Laptop</option>
-                        <option value="iot1">📹 IoT Cam 1</option>
-                        <option value="iot2">📹 IoT Cam 2</option>
-                    </select>
+    <div class="card result-card" id="resultCard">
+        <div class="icon" id="statusIcon">🔍</div>
+        <div>
+            <div class="label">Chẩn đoán AI</div>
+            <div id="diseaseName" class="value">Đang chờ quét...</div>
+            <div id="confidenceLevel" class="sub-value">Độ tin cậy: --%</div>
+        </div>
+    </div>
+</div>
+
+        <div class="controls">
+            <button id="startBtn" class="btn-start">BẬT CAMERA</button>
+            <button id="stopBtn" class="btn-stop" disabled>DỪNG</button>
+            <button id="btnSettings" class="btn-settings" title="Cấu hình cảnh báo">⚙️</button>
+        </div>
+
+        <div class="footer-status" style="margin-top: 10px; color: #aaa;">
+            Trạng thái: <span id="status">Sẵn sàng</span> | FPS: <span id="fps">0</span>
+        </div>
+    </div>
+    <div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⚙️ Cấu hình Cảnh báo</h3>
+            <span class="close-btn" id="closeSettings">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <p class="desc">Hệ thống sử dụng âm thanh mặc định. Bạn có thể tải lên file riêng (.mp3/.wav).</p>
+            
+            <div class="sound-row">
+                <div class="sound-label">
+                    <span>Bệnh Chấm Xám</span>
+                    <small id="status-cham_xam" class="status-text">Đang dùng mặc định</small>
                 </div>
+                <label class="custom-file-upload">
+                    <input type="file" id="input-cham_xam" accept="audio/*">
+                    Thay đổi
+                </label>
             </div>
 
-            <div class="status-panel">
-                <div class="card">
-                    <div>Giờ thực tế</div>
-                    <div id="clock" class="time-display">00:00:00</div>
+            <div class="sound-row">
+                <div class="sound-label">
+                    <span>Bệnh Thối Rễ</span>
+                    <small id="status-thoi_re" class="status-text">Đang dùng mặc định</small>
                 </div>
-                <div class="card">
-                    <div>Tình trạng</div>
-                    <div id="plantStatus" class="status-display status-waiting">
-                        <i class="fas fa-sync fa-spin"></i> Đang quét...
-                    </div>
-                </div>
+                <label class="custom-file-upload">
+                    <input type="file" id="input-thoi_re" accept="audio/*">
+                    Thay đổi
+                </label>
             </div>
 
-            <div class="detail-report">
-                <h3>📋 Kết quả chẩn đoán (YOLOv11)</h3>
-                <div class="report-item"><span class="label">Bệnh:</span> <span id="aiDiseaseName">---</span></div>
-                <div class="report-item"><span class="label">Nguyên nhân:</span> <span id="aiCause">---</span></div>
-                <div class="report-item"><span class="label">Giải pháp:</span> <span id="aiSolution">---</span></div>
+            <div class="sound-row">
+                <div class="sound-label">
+                    <span>Cảnh báo chung</span>
+                    <small id="status-general" class="status-text">Đang dùng mặc định</small>
+                </div>
+                <label class="custom-file-upload">
+                    <input type="file" id="input-general" accept="audio/*">
+                    Thay đổi
+                </label>
+            </div>
+
+            <div class="test-sound">
+                <button id="btnTestSound" class="btn-test">🔊 Nghe thử âm thanh hiện tại</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="script.js"></script>
 </body>
+
+
+    <script type="module">
+
+        // === QUẢN LÝ ÂM THANH (Nâng cao) ===
+
+// 1. Âm thanh mặc định (Tiếng Bíp chuẩn - Base64)
+// Không cần tải file, chạy là có tiếng ngay
+const DEFAULT_BEEP_URL = "./alarm.mp3";
+// --- THÊM DÒNG NÀY ĐỂ SỬA LỖI ---
+const BEEP_URL = DEFAULT_BEEP_URL; // Gán lại để code cũ không bị lỗi
+// Cấu hình âm thanh hiện tại
+const soundConfig = {
+    'cham_xam': { url: DEFAULT_BEEP_URL, isCustom: false },
+    'thoi_re':  { url: DEFAULT_BEEP_URL, isCustom: false },
+    'general':  { url: DEFAULT_BEEP_URL, isCustom: false }
+};
+
+let currentAudio = new Audio();
+let lastAlertTime = 0;
+const ALERT_COOLDOWN = 3000;
+
+// === LOGIC MODAL (POPUP) ===
+const modal = document.getElementById("settingsModal");
+const btnSettings = document.getElementById("btnSettings");
+const spanClose = document.getElementById("closeSettings");
+
+// Mở Modal
+btnSettings.onclick = () => modal.classList.add("show");
+// Đóng Modal
+spanClose.onclick = () => modal.classList.remove("show");
+// Bấm ra ngoài cũng đóng
+window.onclick = (event) => {
+    if (event.target == modal) modal.classList.remove("show");
+}
+
+// --- 1. HÀM XỬ LÝ DATABASE (INDEXED DB) ---
+// Giúp lưu file vào bộ nhớ trình duyệt
+const DB_NAME = "TeaDoctorAudioDB";
+const DB_VERSION = 1;
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains("audios")) {
+                db.createObjectStore("audios"); // Tạo kho chứa
+            }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject("Lỗi mở DB");
+    });
+}
+
+async function saveAudioToDB(key, fileBlob) {
+    const db = await openDB();
+    const tx = db.transaction("audios", "readwrite");
+    tx.objectStore("audios").put(fileBlob, key); // Lưu file với tên key (vd: cham_xam)
+}
+
+async function loadAllAudiosFromDB() {
+    const db = await openDB();
+    const tx = db.transaction("audios", "readonly");
+    const store = tx.objectStore("audios");
+    
+    // Duyệt qua các key cấu hình để load
+    ['cham_xam', 'thoi_re', 'general'].forEach(key => {
+        const request = store.get(key);
+        request.onsuccess = () => {
+            const fileBlob = request.result;
+            if (fileBlob) {
+                // Nếu tìm thấy file đã lưu -> Tạo link và cập nhật
+                const audioUrl = URL.createObjectURL(fileBlob);
+                soundConfig[key] = { url: audioUrl, isCustom: true };
+                
+                // Cập nhật giao diện để người dùng biết
+                updateUIStatus(key, "Đã khôi phục file cũ");
+                console.log(`✅ Đã load lại âm thanh cho: ${key}`);
+            }
+        };
+    });
+}
+
+// --- 2. HÀM CẬP NHẬT GIAO DIỆN ---
+function updateUIStatus(key, message) {
+    const statusEl = document.getElementById(`status-${key}`);
+    if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.classList.add("active");
+        statusEl.style.color = "#28a745";
+    }
+}
+
+// --- 3. LOGIC UPLOAD & EVENT ---
+function setupSoundSystem() {
+    // A. Load file cũ ngay khi vào trang
+    loadAllAudiosFromDB();
+
+    // B. Lắng nghe sự kiện upload mới
+    const keys = ['cham_xam', 'thoi_re', 'general'];
+    keys.forEach(key => {
+        const input = document.getElementById(`input-${key}`);
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                // 1. Tạo URL để dùng ngay
+                const objectUrl = URL.createObjectURL(file);
+                soundConfig[key] = { url: objectUrl, isCustom: true };
+                
+                // 2. Lưu vào DB để lần sau dùng lại
+                await saveAudioToDB(key, file);
+                
+                // 3. Cập nhật UI
+                updateUIStatus(key, `Đã lưu: ${file.name}`);
+                
+                // 4. Kêu thử
+                playAudioImmediate(objectUrl);
+            }
+        };
+    });
+
+    // C. Nút nghe thử
+    const btnTest = document.getElementById('btnTestSound');
+    if(btnTest) btnTest.onclick = () => playAlarm('general', true);
+}
+
+// Gọi hàm khởi tạo
+setupSoundSystem();
+
+
+// --- 4. HÀM PHÁT CẢNH BÁO (CORE) ---
+function playAlarm(label, force = false) {
+    const now = performance.now();
+    
+    // Check cooldown
+    if (!force && (now - lastAlertTime < ALERT_COOLDOWN)) return;
+
+    // Lấy config
+    const config = soundConfig[label] || soundConfig['general'];
+    
+    // Phát
+    playAudioImmediate(config.url);
+    lastAlertTime = now;
+}
+
+function playAudioImmediate(url) {
+    if (!currentAudio) currentAudio = new Audio();
+    
+    // Tránh lỗi source null
+    if (!url) return;
+
+    currentAudio.src = url;
+    currentAudio.play().catch(e => {
+        console.warn("Chưa thể phát tiếng (Cần click vào trang trước):", e);
+    });
+}
+
+
+
+        // Import các hàm cần thiết từ Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // --- CẤU HÌNH FIREBASE (Dán config của bạn vào đây) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDidIP3t7f6GFB_GdySvtdo7RhJESYlQDg",
+            authDomain: "txt2-1e646.firebaseapp.com",
+            projectId: "txt2-1e646",
+            storageBucket: "txt2-1e646.firebasestorage.app",
+            messagingSenderId: "968092612725",
+            appId: "1:968092612725:web:ef44c18ee5c25f2f4de03c",
+            measurementId: "G-GZB6L3MY1L"
+        };
+        // === TỪ ĐIỂN TÊN BỆNH (Việt hóa) ===
+const DISEASE_MAP = {
+    'cham_xam': 'Bệnh Chấm Xám',
+    'thoi_re': 'Bệnh Thối Rễ',
+    'dom_nau': 'Bệnh Đốm Nâu',
+    'tea_rust': 'Gỉ Sắt',
+    // Thêm các label khác từ data.yaml của bạn vào đây
+    'default': 'Không xác định'
+};
+
+// === 1. HÀM ĐỒNG HỒ REAL-TIME ===
+function startClock() {
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('vi-VN');
+        document.getElementById('dateDisplay').textContent = now.toLocaleDateString('vi-VN');
+    }, 1000);
+}
+
+// Gọi hàm này ngay khi trang tải xong
+startClock();
+
+// === 2. HÀM CẬP NHẬT KẾT QUẢ (Gọi trong ws.onmessage) ===
+function updateDashboard(detections) {
+    const resultCard = document.getElementById('resultCard');
+    const nameEl = document.getElementById('diseaseName');
+    const confEl = document.getElementById('confidenceLevel');
+    const iconEl = document.getElementById('statusIcon');
+    if (!detections) detections = [];
+    if (detections.length > 0) {
+        // Lấy kết quả có độ tin cậy cao nhất
+        // (Giả sử model trả về mảng đã sort, hoặc lấy cái đầu tiên)
+        const bestDet = detections[0]; 
+        
+        // Dịch tên bệnh
+        const vnName = DISEASE_MAP[bestDet.label] || bestDet.label;
+        const confPercent = Math.floor(bestDet.conf * 100);
+        // Tìm đoạn này trong updateDashboard
+
+        // Sửa lại đoạn gọi playAlarm:
+        // Hạ thấp ngưỡng xuống 0.3 (30%) để test cho dễ kêu
+        if (bestDet.conf > 0.3) { 
+            console.log(`⚡ Phát hiện bệnh! Điểm: ${bestDet.conf}`); // Log xem nó có vào đây không
+            playAlarm(bestDet.label);
+        } else {
+            console.log(`⚠️ Có bệnh nhưng điểm thấp (${bestDet.conf}), không kêu.`);
+        }
+        // Cập nhật giao diện: CẢNH BÁO (ĐỎ)
+        resultCard.className = "card danger";
+        nameEl.textContent = vnName;
+        nameEl.style.color = "#ff6b6b"; // Chữ đỏ nhạt
+        confEl.textContent = `Độ tin cậy: ${confPercent}%`;
+        iconEl.textContent = "⚠️";
+    } else {
+        // Không tìm thấy gì: AN TOÀN (XANH)
+        resultCard.className = "card safe";
+        nameEl.textContent = "Cây khỏe mạnh";
+        nameEl.style.color = "#28a745";
+        confEl.textContent = "Đang quét...";
+        iconEl.textContent = "🌿";
+    }
+}
+        // Khởi tạo Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // === DOM ELEMENTS & VARS ===
+        const loginScreen = document.getElementById('login-screen');
+        const appScreen = document.getElementById('app-screen');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnLogout = document.getElementById('btnLogout');
+        
+        // --- LOGIC ĐĂNG NHẬP / ĐĂNG XUẤT ---
+        
+        // 1. Lắng nghe trạng thái đăng nhập
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Người dùng ĐÃ đăng nhập
+                console.log("User:", user.displayName);
+                loginScreen.style.display = "none";
+                appScreen.style.display = "block";
+                
+                document.getElementById('userName').textContent = user.displayName;
+                document.getElementById('userAvatar').src = user.photoURL;
+            } else {
+                // Người dùng CHƯA đăng nhập
+                loginScreen.style.display = "block";
+                appScreen.style.display = "none";
+                stopStreaming(); // Dừng camera nếu lỡ đang chạy
+            }
+        });
+
+        // 2. Xử lý nút Đăng nhập
+        btnLogin.onclick = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                alert("Lỗi đăng nhập: " + error.message);
+            }
+        };
+
+        // 3. Xử lý nút Đăng xuất
+        btnLogout.onclick = () => {
+            signOut(auth);
+        };
+
+        // --- LOGIC CAMERA & AI (Phần cũ đã sửa lỗi) ---
+        
+        const WS_URL = "wss://thanhtxt0147-txtdetectleaf.hf.space/ws";
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('outputCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusSpan = document.getElementById('status');
+        const fpsSpan = document.getElementById('fps');
+
+        let ws = null;
+        let isStreaming = false;
+        let isProcessing = false;
+        let latestDetections = [];
+        let frameCount = 0;
+        let lastFrameTime = 0;
+        let lastDetectionTime = 0; // Thời điểm nhận được kết quả cuối cùng
+        // Cho phép các hàm bên dưới được gọi từ global scope (do dùng type="module")
+        window.startStreaming = async () => { /* ... */ }; 
+
+        startBtn.onclick = async () => {
+            startBtn.disabled = true;
+            statusSpan.textContent = "Đang mở camera...";
+            // 1. CỐ GẮNG MỞ KHÓA ÂM THANH (Mồi)
+    try {
+        if (!currentAudio) currentAudio = new Audio();
+        
+        // Nếu chưa có src, dùng link mặc định để mồi
+        if (!currentAudio.src || currentAudio.src === "") {
+            currentAudio.src = BEEP_URL;
+        }
+
+        // Phát và dừng ngay lập tức để xin quyền trình duyệt
+        await currentAudio.play();
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        console.log("✅ Đã mở khóa âm thanh!");
+    } catch (err) {
+        // Nếu lỗi âm thanh, CHỈ in log warning, KHÔNG làm chết app
+        console.warn("⚠️ Không thể mở khóa âm thanh (Nhưng vẫn mở Camera):", err);
+    }
+
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480, facingMode: "environment" } 
+                });
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    video.play();
+                    
+                    isStreaming = true;
+                    stopBtn.disabled = false;
+                    statusSpan.textContent = "Đang kết nối Server...";
+                    requestAnimationFrame(processFrame);
+                    connectWebSocket();
+                };
+            } catch (err) {
+                alert("Lỗi Camera: " + err.message);
+                startBtn.disabled = false;
+            }
+        };
+
+        stopBtn.onclick = stopStreaming;
+
+        function stopStreaming() {
+            isStreaming = false;
+            if (ws) ws.close();
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusSpan.textContent = "Đã dừng";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        // === HÀM VẼ KHUNG CHỮ NHẬT LÊN VIDEO ===
+function drawBoxes(detections) {
+    // 1. Xóa các khung hình cũ đi để vẽ khung mới
+    // (Nếu không xóa, các khung sẽ chồng chéo lên nhau rất rối)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Vẽ lại hình ảnh video làm nền (Nếu canvas nằm đè lên video)
+    // Lưu ý: Nếu bạn dùng CSS để đặt canvas đè lên video thì dòng dưới có thể bỏ. 
+    // Nhưng để chắc chắn, ta cứ vẽ lại ảnh video.
+    // ctx.drawImage(video, 0, 0, canvas.width, canvas.height); 
+    // (Tạm thời bỏ dòng trên nếu bạn dùng style position:absolute cho canvas)
+
+    // 3. Duyệt qua từng kết quả để vẽ
+    detections.forEach(det => {
+        // Lấy tọa độ
+        const [x1, y1, x2, y2] = det.box;
+        const width = x2 - x1;
+        const height = y2 - y1;
+        
+        // Chọn màu sắc: Nếu là 'general' (hoặc healthy) thì màu xanh, bệnh thì màu đỏ
+        const isSafe = det.label === 'healthy' || det.label === 'khoe_manh';
+        const color = isSafe ? '#00FF00' : '#FF0000'; // Xanh hoặc Đỏ
+
+        // Bắt đầu vẽ khung
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.rect(x1, y1, width, height);
+        ctx.stroke();
+
+        // Vẽ nền cho chữ (để dễ đọc)
+        ctx.fillStyle = color;
+        ctx.font = '18px Arial';
+        const text = `${det.label} (${Math.round(det.conf * 100)}%)`;
+        const textWidth = ctx.measureText(text).width;
+        
+        ctx.fillRect(x1, y1 - 25, textWidth + 10, 25);
+
+        // Viết chữ tên bệnh
+        ctx.fillStyle = '#FFFFFF'; // Chữ màu trắng
+        ctx.fillText(text, x1 + 5, y1 - 7);
+    });
+}
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+            ws.binaryType = "blob";
+
+            ws.onopen = () => {
+                statusSpan.textContent = "Đang chạy AI";
+                statusSpan.style.color = "#28a745";
+                processFrame();
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                // --- SỬA: KIỂM TRA DỮ LIỆU AN TOÀN ---
+                // Nếu data là null hoặc undefined, coi như mảng rỗng []
+                const detections = Array.isArray(data) ? data : [];
+
+                latestDetections = data.detections;
+                lastDetectionTime = performance.now();
+
+                // Gọi các hàm vẽ và cập nhật
+                drawBoxes(detections);
+                updateDashboard(detections); // Cập nhật thời gian nhận
+                isProcessing = false;
+                calculateFPS();
+            };
+
+            ws.onclose = () => {
+                if(isStreaming) statusSpan.textContent = "Mất kết nối Server";
+            };
+        }
+
+       let lastSentTime = 0;
+const SEND_INTERVAL = 200; // 200ms = 5 khung hình/giây (Giảm tải cho server)
+
+function processFrame(currentTime) {
+    // A. QUAN TRỌNG NHẤT: Duy trì vòng lặp
+    // Gọi lại hàm này cho khung hình tiếp theo ngay lập tức
+    // Lưu ý: Phải gọi dòng này bất kể có gửi ảnh hay không
+    requestAnimationFrame(processFrame);
+
+    // B. Kiểm tra điều kiện dừng
+    if (!isStreaming) return; // Nếu đã bấm Dừng thì không làm gì cả
+
+    // C. Kiểm tra biến currentTime (Phòng hờ trường hợp trình duyệt cũ không truyền)
+    if (!currentTime) currentTime = performance.now();
+
+    // D. Logic Giới hạn gửi (Throttling)
+    // Chỉ gửi ảnh nếu đã trôi qua đủ 200ms từ lần gửi trước
+    if (currentTime - lastSentTime > SEND_INTERVAL) {
+        
+        // --- Code xử lý ảnh và gửi đi ---
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            // 1. Vẽ video lên canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // 2. Nén và gửi
+            // quality = 0.5 giúp ảnh nhẹ hơn, gửi nhanh hơn
+            const imageData = canvas.toDataURL('image/jpeg', 0.5); 
+            ws.send(JSON.stringify({ image: imageData }));
+            
+            // 3. Cập nhật thời gian vừa gửi
+            lastSentTime = currentTime;
+        }
+        // --------------------------------
+    }
+}
+
+        function drawOverlays(detections) {
+            // Kỹ thuật "Time-out": Nếu kết quả quá cũ (> 200ms) thì không vẽ nữa
+            if (performance.now() - lastDetectionTime > 200) {
+                return; // Thoát luôn, không vẽ gì cả -> Khung sẽ biến mất ngay
+            }
+            detections.forEach(det => {
+                const [x1, y1, x2, y2] = det.bbox;
+                ctx.strokeStyle = "#FF0000";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                
+                ctx.fillStyle = "#FF0000";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText(`${det.label} (${Math.floor(det.conf * 100)}%)`, x1, y1 - 10);
+            });
+        }
+
+        function calculateFPS() {
+            const now = performance.now();
+            frameCount++;
+            if (now - lastFrameTime >= 1000) {
+                fpsSpan.textContent = frameCount;
+                frameCount = 0;
+                lastFrameTime = now;
+            }
+        }
+    </script>
 </html>
