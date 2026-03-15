@@ -336,19 +336,19 @@ input[type="file"] { display: none; } /* Ẩn input xấu xí đi */
             
             <div class="sound-row">
                 <div class="sound-label">
-                    <span>Bệnh Đốm Xám</span>
+                    <span>Bệnh Chấm Xám</span>
                     <small id="status-cham_xam" class="status-text">Đang dùng mặc định</small>
                 </div>
                 <label class="custom-file-upload">
-                    <input type="file" id="input-dom_xam" accept="audio/*">
+                    <input type="file" id="input-cham_xam" accept="audio/*">
                     Thay đổi
                 </label>
             </div>
 
             <div class="sound-row">
                 <div class="sound-label">
-                    <span>Bệnh Đốm Nâu</span>
-                    <small id="status-dom_nau" class="status-text">Đang dùng mặc định</small>
+                    <span>Bệnh Thối Rễ</span>
+                    <small id="status-thoi_re" class="status-text">Đang dùng mặc định</small>
                 </div>
                 <label class="custom-file-upload">
                     <input type="file" id="input-thoi_re" accept="audio/*">
@@ -388,8 +388,8 @@ const DEFAULT_BEEP_URL = "./alarm.mp3";
 const BEEP_URL = DEFAULT_BEEP_URL; // Gán lại để code cũ không bị lỗi
 // Cấu hình âm thanh hiện tại
 const soundConfig = {
-    'dom_xam': { url: DEFAULT_BEEP_URL, isCustom: false },
-    'dom_nau':  { url: DEFAULT_BEEP_URL, isCustom: false },
+    'cham_xam': { url: DEFAULT_BEEP_URL, isCustom: false },
+    'thoi_re':  { url: DEFAULT_BEEP_URL, isCustom: false },
     'general':  { url: DEFAULT_BEEP_URL, isCustom: false }
 };
 
@@ -442,7 +442,7 @@ async function loadAllAudiosFromDB() {
     const store = tx.objectStore("audios");
     
     // Duyệt qua các key cấu hình để load
-    ['dom_xam', 'dom_nau', 'general'].forEach(key => {
+    ['cham_xam', 'thoi_re', 'general'].forEach(key => {
         const request = store.get(key);
         request.onsuccess = () => {
             const fileBlob = request.result;
@@ -475,7 +475,7 @@ function setupSoundSystem() {
     loadAllAudiosFromDB();
 
     // B. Lắng nghe sự kiện upload mới
-    const keys = ['dom_xam', 'dom_nau', 'general'];
+    const keys = ['cham_xam', 'thoi_re', 'general'];
     keys.forEach(key => {
         const input = document.getElementById(`input-${key}`);
         
@@ -555,7 +555,7 @@ const DISEASE_MAP = {
     'dom_xam': 'Bệnh Đốm Xám',
     'chay_bup': 'Bệnh Cháy Búp',
     'dom_nau': 'Bệnh Đốm Nâu',
-    'phong_la': 'Bệnh Phồng Lá',
+    'phong_la': 'Bệnh phồng lá',
     // Thêm các label khác từ data.yaml của bạn vào đây
     'default': 'Không xác định'
 };
@@ -878,5 +878,4 @@ function processFrame(currentTime) {
         }
     </script>
 </html>
-
 
